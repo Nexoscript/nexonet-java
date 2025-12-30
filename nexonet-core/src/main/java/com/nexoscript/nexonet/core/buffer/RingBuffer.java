@@ -1,67 +1,77 @@
 package com.nexoscript.nexonet.core.buffer;
 
-import com.nexoscript.nexonet.api.packet.IPacket;
-
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
-public final class RingBuffer {
-    private static final class Slot {
-        volatile long sequence;
-        volatile IPacket value;
-    }
-
-    private final Slot[] buffer;
+public final class RingBuffer<T> {
+    private final Slot<T>[] buffer;
     private final int mask;
+    private final long capacity;
+    private volatile long head = 0;
+    private volatile long tail = 0;
 
-    private final AtomicLong head = new AtomicLong(0);
-    private final AtomicLong tail = new AtomicLong(0);
-
+    @SuppressWarnings("unchecked")
     public RingBuffer(int sizePowerOfTwo) {
         if (Integer.bitCount(sizePowerOfTwo) != 1) {
             throw new IllegalArgumentException("Size must be power of two");
         }
-        buffer = new Slot[sizePowerOfTwo];
+        this.capacity = sizePowerOfTwo;
+        this.buffer = new Slot[sizePowerOfTwo];
         for (int i = 0; i < sizePowerOfTwo; i++) {
-            Slot s = new Slot();
-            s.sequence = i;
-            buffer[i] = s;
+            Slot<T> slot = new Slot<>();
+            slot.sequence = i;
+            buffer[i] = slot;
         }
-        mask = sizePowerOfTwo - 1;
+        this.mask = sizePowerOfTwo - 1;
     }
 
-    public void offer(IPacket packet) {
+    public void offer(T value) {
         long pos;
-        Slot slot;
+        Slot<T> slot;
 
         while (true) {
-            pos = tail.get();
+            pos = tail;
             slot = buffer[(int) (pos & mask)];
 
             long seq = slot.sequence;
             long diff = seq - pos;
+
             if (diff == 0) {
-                if (tail.compareAndSet(pos, pos + 1)) {
+                if (compareAndSetTail(pos, pos + 1)) {
                     break;
                 }
-                continue;
+            } else {
+                Thread.onSpinWait();
             }
-            Thread.onSpinWait();
         }
-        slot.value = packet;
+
+        slot.value = value;
         slot.sequence = pos + 1;
     }
 
-    public IPacket poll() {
-        long pos = head.get();
-        Slot slot = buffer[(int) (pos & mask)];
+    public T poll() {
+        long pos = head;
+        Slot<T> slot = buffer[(int) (pos & mask)];
+
         if (slot.sequence != pos + 1) {
             return null;
         }
-        IPacket value = slot.value;
+
+        T value = slot.value;
         slot.value = null;
-        slot.sequence = pos + buffer.length;
-        head.lazySet(pos + 1);
+        slot.sequence = pos + capacity;
+        head = pos + 1;
+
         return value;
+    }
+
+    private synchronized boolean compareAndSetTail(long expected, long update) {
+        if (tail == expected) {
+            tail = update;
+            return true;
+        }
+        return false;
+    }
+
+    private static final class Slot<T> {
+        volatile long sequence;
+        volatile T value;
     }
 }

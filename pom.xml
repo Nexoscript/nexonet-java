@@ -13,7 +13,6 @@
     <modules>
         <module>nexonet-api</module>
         <module>nexonet-core</module>
-        <module>nexonet-packet</module>
         <module>nexonet-server</module>
         <module>nexonet-client</module>
         <module>nexonet-test</module>

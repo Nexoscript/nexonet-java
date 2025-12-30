@@ -63,9 +63,9 @@ public class Testserver {
         });
         server.onServerReceived((client, packet) -> {
             System.out.println("Server received from client with ID: " + client.getId());
-            if(packet instanceof MessagePacket messageRequestPacket) {
-                System.out.println(messageRequestPacket);
-                if(messageRequestPacket.getMessage().equalsIgnoreCase("ping")) {
+            if(packet instanceof MessagePacket messagePacket) {
+                System.out.println(messagePacket);
+                if(messagePacket.getMessage().equalsIgnoreCase("ping")) {
                     server.sendToClient(client.getId(), new MessagePacket("pong"));
                 }
             }
@@ -104,8 +104,8 @@ public class MyServer {
         server.getPacketManager().registerPacketType("MESSAGE_PACKET", MessagePacket.class);
         server.onClientConnect(client -> {
             System.out.println("Client connected with ID: " + client.getId());
-            MessagePacket messageRequestPacket = new MessagePacket(cryptoManager.encryptString(command[2]));
-            server.sendToClient(client.getId(), messageRequestPacket);
+            MessagePacket messagePacket = new MessagePacket(cryptoManager.encryptString(command[2]));
+            server.sendToClient(client.getId(), messagePacket);
             System.out.println("[System] -> Send Message to Client!");
         });
         server.onClientDisconnect(client -> {
@@ -113,8 +113,8 @@ public class MyServer {
         });
         server.onServerReceived((client, packet) -> {
             System.out.println("Server received from client with ID: " + client.getId());
-            if(packet instanceof MessagePacket messageRequestPacket) {
-                System.out.println(cryptoManager.decryptString(messageRequestPacket.getMessage()));
+            if(packet instanceof MessagePacket messagePacket) {
+                System.out.println(cryptoManager.decryptString(messagePacket.getMessage()));
             }
         });
         server.onServerSend((client, packet) -> {});
@@ -150,14 +150,14 @@ public class Testclient {
         });
         client.onClientReceived((iClient, packet) -> {
             System.out.println("Client with ID: " + iClient.getID() + " received!");
-            if(packet instanceof MessagePacket messageRequestPacket) {
-                System.out.println(messageRequestPacket);
+            if(packet instanceof MessagePacket messagePacket) {
+                System.out.println(messagePacket);
             }
         });
         client.onClientSend((iClient, packet) -> {
             System.out.println("Client with ID: " + iClient.getID() + " send!");
-            if(packet instanceof MessagePacket messageRequestPacket) {
-                System.out.println(messageRequestPacket);
+            if(packet instanceof MessagePacket messagePacket) {
+                System.out.println(messagePacket);
             }
         });
         client.connect("127.0.0.1", 1234);
@@ -187,8 +187,8 @@ public class MyClient {
         client.getPacketManager().registerPacketType("MESSAGE_PACKET", MessagePacket.class);
         client.onClientConnect(iClient -> {
             System.out.println("Client connected with ID: " + iClient.getID());
-            MessagePacket messageRequestPacket = new MessagePacket(cryptoManager.encryptString(command[1]));
-            client.send(messageRequestPacket);
+            MessagePacket messagePacket = new MessagePacket(cryptoManager.encryptString(command[1]));
+            client.send(messagePacket);
             System.out.println("[System] -> Send Message to Server!");
         });
         client.onClientDisconnect(iClient -> {
@@ -196,8 +196,8 @@ public class MyClient {
         });
         client.onClientReceived((iClient, packet) -> {
             System.out.println("Client with ID: " + iClient.getID() + " received!");
-            if(packet instanceof MessagePacket messageRequestPacket) {
-                System.out.println(cryptoManager.decryptString(messageRequestPacket.getMessage()));
+            if(packet instanceof MessagePacket messagePacket) {
+                System.out.println(cryptoManager.decryptString(messagePacket.getMessage()));
             }
         });
         client.onClientSend((iClient, packet) -> {});

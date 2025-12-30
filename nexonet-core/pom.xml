@@ -20,7 +20,7 @@
     <dependencies>
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
-            <artifactId>nexonet-packet</artifactId>
+            <artifactId>nexonet-api</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
     </dependencies>
